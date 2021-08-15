@@ -345,7 +345,7 @@ void CallManager::onCallChannelAvailable(Tp::CallChannelPtr channel)
 void CallManager::onCallEnded()
 {
     qDebug() << __PRETTY_FUNCTION__;
-    // FIXME: handle multiple calls
+
     CallEntry *entry = qobject_cast<CallEntry*>(sender());
     if (!entry) {
         return;
@@ -354,6 +354,13 @@ void CallManager::onCallEnded()
     // at this point the entry should be removed
     if (entry == mConferenceCall) {
         mConferenceCall = 0;
+    } else if (hasBackgroundCall()) {
+        for (CallEntry *entry : mCallEntries) {
+            if (entry->isHeld()) {
+                entry->setHold(false);
+                break;
+            }
+        }
     } else {
         mCallEntries.removeAll(entry);
     }
