@@ -1,3 +1,9 @@
+telephony-service (0.4+0ubports4) xenial; urgency=medium
+
+  * Lookup initialised callchannel when rejecting calls
+
+ -- José Pekkarinen <jose.pekkarinen@foxhound.fi>  Sun, 10 Oct 2021 13:46:51 +0300
+
 telephony-service (0.4+0ubports3) xenial; urgency=medium
 
   * mms lost or on download error: notify user

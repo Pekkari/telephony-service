@@ -400,8 +400,15 @@ void Approver::onRejected(Tp::ChannelDispatchOperationPtr dispatchOp)
     closeSnapDecision();
 
     Tp::PendingOperation *claimop = dispatchOp->claim();
-    // assume there is just one channel in the dispatchOp for calls
-    mChannels[claimop] = dispatchOp->channels().first();
+
+    for (Tp::ChannelPtr channel : dispatchOp->channels()) {
+        if (channel->channelType() == TP_QT_IFACE_CHANNEL_TYPE_CALL) {
+            Tp::CallChannelPtr callChannel = Tp::CallChannelPtr::dynamicCast(channel);
+            if (callChannel->callState() == Tp::CallStateInitialised)
+                mChannels[claimop] = channel;
+        }
+    }
+
     connect(claimop, SIGNAL(finished(Tp::PendingOperation*)),
             this, SLOT(onClaimFinished(Tp::PendingOperation*)));
 
@@ -412,7 +419,17 @@ void Approver::onRejectMessage(Tp::ChannelDispatchOperationPtr dispatchOp, const
 {
     if (mRejectActions.contains(action)) {
         QVariantMap properties;
-        properties["participantIds"] = QStringList() << dispatchOp->channels().first()->targetContact()->id();
+        Tp::ChannelPtr initialisedChannel;
+
+        for (Tp::ChannelPtr channel : dispatchOp->channels()) {
+            if (channel->channelType() == TP_QT_IFACE_CHANNEL_TYPE_CALL) {
+                Tp::CallChannelPtr callChannel = Tp::CallChannelPtr::dynamicCast(channel);
+                if (callChannel->callState() == Tp::CallStateInitialised)
+                    initialisedChannel = channel;
+            }
+        }
+
+        properties["participantIds"] = QStringList() << initialisedChannel->targetContact()->id();
         ChatManager::instance()->sendMessage(dispatchOp->account()->uniqueIdentifier(),
                                              mRejectActions[action],
                                              QVariantMap(), // attachments
